@@ -9,6 +9,10 @@
 
                 <?= $render('feed-editor', ['user' => $loggedUser]) ?>
 
+                <?php if (!count($feed['posts'])): ?>
+                    <img class="user-relation" src="<?= $base ?>/assets/images/user_relation.png" alt="">
+                <?php endif ?>
+
                 <?php foreach($feed['posts'] as $feedItem): ?>
                     <?= $render('feed-item', [
                         'data' => $feedItem,

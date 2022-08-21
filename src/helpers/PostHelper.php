@@ -4,6 +4,8 @@ namespace src\helpers;
 use \src\models\Post;
 use \src\models\User;
 use \src\models\UserRelation;
+use \src\models\PostLike;
+use \src\models\PostComment;
 
 class PostHelper {
     public static function addPost($id, $type, $body)
@@ -30,7 +32,7 @@ class PostHelper {
             $newPost->body = $postItem['body'];
             $newPost->mine = false;
 
-            if ($postItem['id'] === $loggedUserId) {
+            if($postItem['id_user'] == $loggedUserId) {
                 $newPost->mine = true;
             }
 
@@ -43,16 +45,56 @@ class PostHelper {
             $newPost->user->avatar = $newUser['avatar'];
 
             // 4.1 - preencher informações de LIKE
-            $newPost->likeCount = 0;
-            $newPost->liked = false;
+            $likes = PostLike::select()->where('id_post', $postItem['id'])->get();
+
+            $newPost->likeCount = count($likes);
+            $newPost->liked = self::isLiked($postItem['id'], $loggedUserId);
 
             // 4.2 - preencher informações de COMMENTS
-            $newPost->comments = [];
+            $newPost->comments = PostComment::select()->where('id_post', $postItem['id'])->get();
+            foreach($newPost->comments as $key => $comment) {
+                $newPost->comments[$key]['user'] = User::select()->where('id', $comment['id_user'])->one();
+            }
 
             $posts[] = $newPost;
         }
 
         return $posts;
+    }
+
+    public static function isLiked($id, $loggedUserId)
+    {
+        $myLike = PostLike::select()->where('id_post', $id)->where('id_user', $loggedUserId)->get();
+
+        if (count($myLike) > 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public static function deleteLike($id, $loggedUserId)
+    {
+        PostLike::delete()->where('id_post', $id)->where('id_user', $loggedUserId)->execute();
+    }
+
+    public static function addLike($id, $loggedUserId)
+    {
+        PostLike::insert([
+            'id_post' => $id,
+            'id_user' => $loggedUserId,
+            'created_at' => date('Y-m-d H:i:s')
+        ])->execute(); 
+    }
+
+    public static function addComment($id, $txt, $loggedUserId)
+    {
+        PostComment::insert([
+            'id_post' => $id,
+            'id_user' => $loggedUserId,
+            'created_at' => date('Y-m-d H:i:s'),
+            'body' => $txt
+        ])->execute();
     }
 
     public static function getUserFeed($idUser, $page, $loggedUserId)
@@ -139,5 +181,34 @@ class PostHelper {
         }
 
         return $photos;
+    }
+
+    public static function delete($idPost, $loggedUserId)
+    {
+        // 1 - Verificar se o Post existe (e se ele é SEU)
+        $post = Post::select()->where('id', $idPost)->where('id_user', $loggedUserId)->get();
+
+        if (count($post) > 0) {
+            $post = $post[0];
+
+            // 2 - Deletar os likes e comments
+            PostLike::delete()->where('id_post', $idPost)->execute();
+            PostComment::delete()->where('id_post', $idPost)->execute();
+
+            // 3 - Se o Post for type == photo, deletar o arquivo
+            if ($post['type'] == 'photo') {
+                $img = __DIR__ . '/../../public/media/uploads/' . $post['body'];
+
+                if (file_exists($img)) {
+                    unlink($img);
+                }
+
+            }
+
+            // 4 - Deletar o Post
+            Post::delete()->where('id', $idPost)->execute();
+        }
+
+
     }
 }

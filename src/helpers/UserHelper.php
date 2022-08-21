@@ -19,7 +19,9 @@ class UserHelper {
 
                 $loggedUser->id = $data['id'];
                 $loggedUser->name = $data['name'];
+                $loggedUser->email = $data['email'];
                 $loggedUser->avatar = $data['avatar'];
+                $loggedUser->cover = $data['cover'];
 
                 return $loggedUser;
             }
@@ -68,6 +70,7 @@ class UserHelper {
 
             $user->id = $data['id'];
             $user->name = $data['name'];
+            $user->email = $data['email'];
             $user->birthdate = $data['birthdate'];
             $user->city = $data['city'];
             $user->work = $data['work'];
@@ -178,5 +181,34 @@ class UserHelper {
         }
 
         return $users;
+    }
+
+    public static function updateUser($userInfo, $id) {
+
+        User::update()
+            ->set('name', $userInfo['name'])
+            ->set('email', $userInfo['email'])
+            ->set('birthdate', $userInfo['birthdate'])
+            ->set('city', $userInfo['city'])
+            ->set('work', $userInfo['work'])
+        ->where('id', $id)->execute();
+
+        if (isset($userInfo['password'])) {
+            User::update()
+                ->set('password', password_hash($userInfo['password'], PASSWORD_DEFAULT))
+            ->where('id', $id)->execute();
+        }
+
+        if (isset($userInfo['avatar'])) {
+            User::update()
+                ->set('avatar', $userInfo['avatar'])
+            ->where('id', $id)->execute();
+        }
+
+        if (isset($userInfo['cover'])) {
+            User::update()
+                ->set('cover', $userInfo['cover'])
+            ->where('id', $id)->execute();
+        }
     }
 }
