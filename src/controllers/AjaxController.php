@@ -77,7 +77,7 @@ class AjaxController extends Controller {
                 if ($ratioMax > $ratio) {
                     $newWidth = $newHeight * $ratio;
                 } else {
-                    $newheight = $newWidth / $ratio;
+                    $newHeight = $newWidth / $ratio;
                 }
 
                 $finalImage = imagecreatetruecolor($newWidth, $newHeight);
