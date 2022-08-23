@@ -7,7 +7,7 @@ Colocar em prática todo conhecimento obtido em MVC
 ```php
 <?php
 namespace src\models;
-use \core\Ojuliocesar;
+use \core\Model;
 
 class Devsbook extends Ojuliocesar {
     :D
